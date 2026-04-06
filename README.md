@@ -40,9 +40,28 @@ pkg/models/                  # Modelos de dados
 
 Requisitos: Go 1.26+ e token JWT válido.
 
+### Via `go install` (Recomendado)
+
 ```bash
+go install github.com/publi0/mec-livros-epub/cmd/mectlivros@latest
+mectlivros
+```
+
+O binário será instalado em `$GOPATH/bin/` (geralmente `~/go/bin/`).
+
+### Via Build Local
+
+```bash
+git clone https://github.com/publi0/mec-livros-epub.git
+cd mec-livros-epub
 go build -o mectlivros ./cmd/mectlivros
 ./mectlivros
+```
+
+### Via `go run`
+
+```bash
+go run ./cmd/mectlivros
 ```
 
 ## Uso
@@ -52,6 +71,27 @@ go build -o mectlivros ./cmd/mectlivros
 3. Seleciona qual baixar
 4. Download paralelo com 8 workers
 5. Gera EPUB pronto para leitura
+
+## Dependências
+
+O projeto utiliza apenas **dependências externas mínimas**:
+
+```bash
+go mod download
+```
+
+Verifique as dependências:
+
+```bash
+go list -m all
+```
+
+Para atualizar dependências:
+
+```bash
+go get -u ./...
+go mod tidy
+```
 
 ## Configuração
 
@@ -137,9 +177,46 @@ Downloading 39 chapters with 8 workers...
 
 ## Atualização
 
+Se você instalou via `go install`:
+
 ```bash
+go install github.com/publi0/mec-livros-epub/cmd/mectlivros@latest
+```
+
+Se você clonou o repositório:
+
+```bash
+git pull origin main
 go mod tidy
-go get -u ./...
+go build -o mectlivros ./cmd/mectlivros
+```
+
+Para verificar versão:
+
+```bash
+mectlivros --version
+```
+
+## Desenvolvimento
+
+Para contribuir ou trabalhar com o código:
+
+```bash
+# Clone o repositório
+git clone https://github.com/publi0/mec-livros-epub.git
+cd mec-livros-epub
+
+# Instale dependências
+go mod download
+
+# Execute testes
+go test ./...
+
+# Build
+go build -o mectlivros ./cmd/mectlivros
+
+# Lint (opcional, instale golangci-lint)
+golangci-lint run ./...
 ```
 
 ## Licença
