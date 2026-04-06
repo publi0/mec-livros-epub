@@ -3,7 +3,6 @@ package cache
 import (
 	"encoding/json"
 	"fmt"
-	"log/slog"
 	"os"
 	"path/filepath"
 	"time"
@@ -18,8 +17,8 @@ type Cache struct {
 
 // TokenData represents cached token with metadata
 type TokenData struct {
-	Token   string    `json:"token"`
-	SavedAt time.Time `json:"saved_at"`
+	Token   string `json:"token"`
+	SavedAt string `json:"saved_at"`
 }
 
 func New() *Cache {
@@ -40,7 +39,6 @@ func (c *Cache) Get() string {
 
 	var tokenData TokenData
 	if err := json.Unmarshal(data, &tokenData); err != nil {
-		slog.Warn("failed to unmarshal cache", "error", err)
 		return ""
 	}
 
@@ -50,7 +48,7 @@ func (c *Cache) Get() string {
 func (c *Cache) Save(token string) error {
 	tokenData := TokenData{
 		Token:   token,
-		SavedAt: time.Now(),
+		SavedAt: time.Now().Format(time.RFC3339),
 	}
 
 	data, err := json.Marshal(tokenData)
@@ -62,7 +60,6 @@ func (c *Cache) Save(token string) error {
 		return fmt.Errorf("write cache file: %w", err)
 	}
 
-	slog.Info("token saved to cache", "path", c.path)
 	return nil
 }
 
@@ -72,7 +69,6 @@ func (c *Cache) Clear() error {
 		return fmt.Errorf("remove cache file: %w", err)
 	}
 
-	slog.Info("cache cleared")
 	return nil
 }
 

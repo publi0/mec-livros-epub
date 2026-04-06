@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -20,8 +21,9 @@ import (
 const operationTimeout = 10 * time.Minute
 
 func main() {
+	// Only log warnings and errors
 	logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
-		Level: slog.LevelInfo,
+		Level: slog.LevelWarn,
 	}))
 	slog.SetDefault(logger)
 
@@ -38,6 +40,12 @@ func main() {
 
 	ctx, cancel := context.WithTimeout(context.Background(), operationTimeout)
 	defer cancel()
+
+	if err := os.MkdirAll("epubs", 0755); err != nil {
+		slog.Error("failed to create epubs directory", "error", err)
+		fmt.Printf("%s\n", red("❌ Erro ao criar pasta epubs"))
+		os.Exit(1)
+	}
 
 	cacheManager := cache.New()
 	cachedToken := cacheManager.Get()
@@ -154,7 +162,8 @@ func main() {
 		"images", stats.ImageSuccess,
 	)
 
-	builder := epub.NewBuilder(outputName)
+	epubsPath := filepath.Join("epubs", outputName)
+	builder := epub.NewBuilder(epubsPath)
 	epubPath, err := builder.Build(manifest, chapters, cssFiles, fontFiles, imageFiles)
 	if err != nil {
 		slog.Error("epub build failed", "error", err)

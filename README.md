@@ -72,6 +72,21 @@ go run ./cmd/mectlivros
 4. Download paralelo com 8 workers
 5. Gera EPUB pronto para leitura
 
+Os arquivos EPUB são salvos na pasta `epubs/` (criada automaticamente se não existir).
+
+## Estrutura de Arquivos
+
+```
+mec-livros-epub/
+├── cmd/                     # Aplicação CLI
+├── internal/                # Pacotes internos
+├── pkg/                     # Pacotes públicos
+├── epubs/                   # 📁 Arquivos EPUB salvos aqui (criado automaticamente)
+├── .mec_livros_token        # Cache JWT (gitignored)
+├── README.md
+└── go.mod
+```
+
 ## Dependências
 
 O projeto utiliza apenas **dependências externas mínimas**:
@@ -98,6 +113,7 @@ go mod tidy
 - Workers: 8
 - Timeout: 30s por requisição, 10min total
 - Cache: `~/.mec_livros_token` (permissão 600 - apenas proprietário)
+- Output: `epubs/` (diretório criado automaticamente)
 
 ## Recursos Modernos (Go 1.26)
 
@@ -159,7 +175,7 @@ Usar token do cache? [Y/n/limpar]: limpar
 
 Downloading 39 chapters with 8 workers...
 
-✅ EPUB criado: Devoradores de estrelas - Andy Weir.epub (13.5 MB)
+✅ EPUB criado: epubs/Devoradores de estrelas - Andy Weir.epub (13.5 MB)
    Capítulos: 39/39 | CSS: 2 | Fontes: 8 | Imagens: 6
 
 🎉 Sucesso!

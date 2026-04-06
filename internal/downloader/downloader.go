@@ -112,7 +112,6 @@ func (c *HTTPClient) FetchRentals(ctx context.Context) ([]models.Rental, error) 
 		return nil, fmt.Errorf("unmarshal rentals: %w", err)
 	}
 
-	slog.Info("rentals fetched", "count", len(resp.Rentals))
 	return resp.Rentals, nil
 }
 
@@ -131,12 +130,6 @@ func (c *HTTPClient) FetchManifest(ctx context.Context, bookID string) (*models.
 	}
 
 	webpubBaseURL := extractWebpubURL(manifest)
-
-	slog.Info("manifest fetched",
-		"title", manifest.Manifest.Metadata.Title,
-		"chapters", len(manifest.Manifest.ReadingOrder),
-		"resources", len(manifest.Manifest.Resources),
-	)
 
 	return &manifest, webpubBaseURL, nil
 }
@@ -184,11 +177,6 @@ func (c *HTTPClient) DownloadAll(ctx context.Context, manifest *models.Manifest,
 	}
 
 	stats := &Stats{}
-
-	slog.Info("starting downloads",
-		"chapters", len(manifest.Manifest.ReadingOrder),
-		"workers", maxWorkers,
-	)
 
 	chapters, err := c.downloadResources(ctx, manifest.Manifest.ReadingOrder, webpubBaseURL, resourceTypeChapter, stats)
 	if err != nil {
@@ -283,7 +271,6 @@ func (c *HTTPClient) downloadResources(ctx context.Context, resources []models.R
 
 			_, body, err := c.DoRequest(ctx, url, headers)
 			if err != nil {
-				slog.Debug("download failed", "url", url, "error", err)
 				atomic.AddInt32(&stats.ChaptersFailed, 1)
 				return
 			}
