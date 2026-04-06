@@ -4,30 +4,30 @@ Aplicativo em Go 1.26 para download de ebooks da plataforma [MeC Livros](https:/
 
 ---
 
-## 🚨 ⚠️ AVISO DE SEGURANÇA - LEIA ANTES DE USAR
+## ⚠️ Avisos Importantes
 
-**O token JWT é uma credencial sensível que concede acesso total à sua conta!**
+**Segurança do Token JWT**
+O token exigido por esta aplicação é uma credencial sensível que concede acesso à sua conta no MeC Livros.
 
-### ⛔ NÃO FAÇA:
+- Nunca compartilhe seu token com terceiros.
+- Não publique ou versione o arquivo de cache (`~/.mec_livros_token`) em repositórios (o `.gitignore` já está configurado para preveni-lo).
+- Em caso de suspeita de vazamento, encerre suas sessões ativas na plataforma e exclua o cache local.
 
-- ❌ Nunca compartilhe seu token com ninguém
-- ❌ Não publique em repositórios públicos, issues, pull requests ou discussões
-- ❌ Não envie por email, chat, SMS ou qualquer outro meio
-- ❌ Não reutilize em outros aplicativos ou plataformas
-- ❌ Não faça commit do arquivo `~/.mec_livros_token` em repositórios
+**Uso e Direitos Autorais**
+Esta é uma ferramenta não-oficial desenvolvida para facilitar a leitura offline. A plataforma MeC Livros opera em um modelo de **empréstimo temporário**. Ao utilizar este software, você é inteiramente responsável por cumprir os Termos de Serviço da plataforma, o que inclui:
 
-### 🔓 RISCOS DE UM TOKEN COMPROMETIDO:
+- Utilizar os arquivos baixados estritamente para leitura pessoal.
+- **Excluir os arquivos EPUB** após o término do período de aluguel estipulado pela plataforma.
+- Não distribuir, compartilhar, alterar ou comercializar os ebooks, respeitando a Lei de Direitos Autorais (Lei nº 9.610/1998).
 
-- Qualquer pessoa com seu token pode acessar **todos os seus ebooks alugados**
-- Fazer download ilimitado durante o período de aluguel
-- Acessar seu histórico de leitura e preferências
-- Potencialmente usar dados pessoais vinculados à sua conta gov.br
+**Isenção de Responsabilidade**
+Este software é fornecido "como está" (as-is), sem garantias de qualquer tipo. O desenvolvedor não possui nenhum vínculo com o Ministério da Educação (MEC), UFMG ou mantenedores da plataforma MeC Livros, e não se responsabiliza pelo uso indevido da ferramenta ou por infrações aos termos de serviço.
 
 ---
 
 ## Estrutura
 
-```
+```text
 cmd/mectlivros/              # Ponto de entrada
 internal/
 ├── cache/                   # Cache JWT
@@ -66,17 +66,17 @@ go run ./cmd/mectlivros
 
 ## Uso
 
-1. Informa ou usa token do cache (`~/.mec_livros_token`)
-2. Lista ebooks alugados
-3. Seleciona qual baixar
-4. Download paralelo com 8 workers
-5. Gera EPUB pronto para leitura
+1. Informe ou use o token salvo em cache (`~/.mec_livros_token`).
+2. O sistema listará seus ebooks alugados ativamente.
+3. Selecione qual livro deseja baixar.
+4. O download será feito de forma paralela (8 workers).
+5. O arquivo EPUB será gerado e salvo para leitura.
 
 Os arquivos EPUB são salvos na pasta `epubs/` (criada automaticamente se não existir).
 
 ## Estrutura de Arquivos
 
-```
+```text
 mec-livros-epub/
 ├── cmd/                     # Aplicação CLI
 ├── internal/                # Pacotes internos
@@ -110,10 +110,10 @@ go mod tidy
 
 ## Configuração
 
-- Workers: 8
-- Timeout: 30s por requisição, 10min total
-- Cache: `~/.mec_livros_token` (permissão 600 - apenas proprietário)
-- Output: `epubs/` (diretório criado automaticamente)
+- **Workers:** 8
+- **Timeout:** 30s por requisição, 10min no total da operação
+- **Cache:** `~/.mec_livros_token` (permissão 600 - apenas leitura/escrita para o proprietário)
+- **Output:** Diretório `epubs/`
 
 ## Recursos Modernos (Go 1.26)
 
@@ -125,35 +125,30 @@ go mod tidy
 
 ## Obter Token JWT
 
-1. Acesse [meclivros.mec.gov.br](https://meclivros.mec.gov.br)
-2. Faça login com gov.br
-3. DevTools (F12) > Application > Local Storage
-4. Copie o valor do campo `token` ou `jwt`
-5. Cole no aplicativo quando solicitado
-
-⚠️ **Lembre-se**: Use o token apenas nesta máquina local. Não o compartilhe.
+1. Acesse [meclivros.mec.gov.br](https://meclivros.mec.gov.br) e faça login com sua conta gov.br.
+2. Abra o DevTools do navegador (F12) e navegue até a aba **Application** > **Local Storage**.
+3. Copie o valor do campo `token` ou `jwt`.
+4. Cole o token no aplicativo quando solicitado.
 
 ## Cache
 
-Token é salvo automaticamente em `~/.mec_livros_token` para reutilização futura.
+O token é salvo automaticamente em `~/.mec_livros_token` para reutilização futura. O arquivo é criado com permissões restritas (600) por segurança.
 
-**Proteção de arquivo**: O cache é criado com permissão 600 (apenas leitura/escrita do proprietário). Não altere essas permissões.
-
-Para limpar:
+Para limpar o cache manualmente:
 
 ```bash
 rm ~/.mec_livros_token
 ```
 
-Ou use o aplicativo:
+Ou diretamente pelo prompt do aplicativo:
 
-```
+```text
 Usar token do cache? [Y/n/limpar]: limpar
 ```
 
 ## Saída Exemplo
 
-```
+```text
 ============================================
 📚 MEC LIVROS - EBOOK DOWNLOADER (Go 1.26)
 ============================================
@@ -183,13 +178,13 @@ Downloading 39 chapters with 8 workers...
 
 ## Troubleshooting
 
-| Erro                 | Solução                                           |
-| -------------------- | ------------------------------------------------- |
-| 401 Unauthorized     | Token expirado. Gere novo no navegador.           |
-| Timeout              | Rede lenta. Verifique sua conexão.                |
-| SSL Error            | Necessário para ALB interno AWS. Normal.          |
-| EPUB vazio           | Verifique se o livro está alugado e ativo.        |
-| Token não encontrado | Cole o token quando solicitado ou delete o cache. |
+| Erro                 | Solução                                                  |
+| -------------------- | -------------------------------------------------------- |
+| 401 Unauthorized     | Token expirado. Gere novo no navegador.                  |
+| Timeout              | Rede lenta. Verifique sua conexão.                       |
+| SSL Error            | Necessário para ALB interno AWS. Comportamento normal.   |
+| EPUB vazio           | Verifique se o livro está alugado e ativo na plataforma. |
+| Token não encontrado | Cole o token quando solicitado ou delete o cache.        |
 
 ## Atualização
 
@@ -237,4 +232,4 @@ golangci-lint run ./...
 
 ## Licença
 
-Uso pessoal. Respeite os termos de uso da plataforma MeC Livros.
+Uso pessoal. O código fonte deste repositório é livre, mas isso **não confere nenhum direito** sobre os ebooks baixados através da ferramenta. O conteúdo digital pertence aos respectivos autores e editoras.
