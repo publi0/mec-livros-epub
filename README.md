@@ -15,7 +15,7 @@ Aplicativo em Go 1.26 para download de ebooks da plataforma [MeC Livros](https:/
 
 ---
 
-## 🚀 Instalação e Atualização
+## Instalação e Atualização
 
 Requer **Go 1.26+**.
 
@@ -35,7 +35,7 @@ cd mec-livros-epub
 go build -o mectlivros ./cmd/mectlivros
 ```
 
-## 📖 Como Usar
+## Como Usar
 
 ### 1. Obtenha seu Token JWT
 
@@ -96,12 +96,12 @@ Downloading 39 chapters with 8 workers...
 | SSL Error        | Necessário para ALB interno AWS. Comportamento normal.      |
 | EPUB vazio       | Verifique se o livro está ativamente alugado na plataforma. |
 
-## ⚙️ Arquitetura e Recursos Modernos
+## Arquitetura e Recursos Modernos
 
 - **Estrutura:** `cmd/` (CLI principal), `internal/` (Downloader, Cache, EPUB Builder), `pkg/models/` (Data structs).
 - **Go 1.26:** Utiliza bibliotecas e padrões modernos do Go, como `slog` para structured logging, `context` para timeout de operações, concorrência nativa (`goroutines` e `atomic` counters) e generics (`cmp.Or`).
 - **Dependências Mínimas:** Foco em utilizar a Standard Library o máximo possível.
 
-## 📄 Licença
+## Licença
 
 Uso pessoal. O código fonte deste repositório é livre, mas isso **não confere nenhum direito** sobre os ebooks baixados através da ferramenta. O conteúdo digital pertence aos respectivos autores e editoras.
