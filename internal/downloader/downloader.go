@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log/slog"
 	"net/http"
 	"path"
 	"strings"
@@ -233,10 +232,6 @@ func (c *HTTPClient) DownloadAll(ctx context.Context, manifest *models.Manifest,
 	var errs []error
 	for err := range errChan {
 		errs = append(errs, err)
-	}
-
-	if len(errs) > 0 {
-		slog.Warn("some resource downloads failed", "errors", len(errs))
 	}
 
 	return stats, chapters, cssFiles, fontFiles, imageFiles, nil
