@@ -97,3 +97,4 @@ debug/
 # ============================================================
 .vscode-settings.json
 .coverage
+.claude

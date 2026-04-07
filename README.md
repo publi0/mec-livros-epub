@@ -1,10 +1,10 @@
 # MeC Livros Ebook Downloader
 
-Aplicativo em Go 1.26 para download de ebooks da plataforma [MeC Livros](https://meclivros.mec.gov.br) e geração de arquivos EPUB.
+CLI em Go 1.26 para download de ebooks da plataforma [MeC Livros](https://meclivros.mec.gov.br) e geração de arquivos EPUB.
 
 ---
 
-## ⚠️ Avisos Importantes
+## Avisos Importantes
 
 - **Segurança do Token:** O token JWT exigido por esta aplicação é uma credencial sensível. Nunca o compartilhe, publique ou versione em repositórios. O arquivo de cache (`~/.mec_livros_token`) é criado automaticamente com permissões restritas (600) para sua proteção.
 - **Uso e Direitos Autorais:** Esta é uma ferramenta não-oficial para facilitar a leitura offline de **empréstimos temporários**. Você é inteiramente responsável por:
@@ -58,43 +58,27 @@ mectlivros
 
 _Dica: Para limpar o token salvo ou trocar de conta, basta excluir o cache: `rm ~/.mec_livros_token`_
 
-## 🔍 Exemplo de Saída
+## Exemplo de Saída
 
 ```text
-============================================
-📚 MEC LIVROS - EBOOK DOWNLOADER (Go 1.26)
-============================================
-
-🔐 Token em cache encontrado
-   Token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-
-📚 Encontrados 1 ebook(s):
-   [1] Devoradores de estrelas (ID: 1001903, 14 dias restantes)
-
-🎯 Auto-selecionado: Devoradores de estrelas
-
-📁 Saída: Devoradores de estrelas - Andy Weir.epub
-🚀 Iniciando download...
-
-📖 Devoradores de estrelas - Andy Weir
-   Capítulos: 39 | Recursos: 17
-
-Downloading 39 chapters with 8 workers...
-
-✅ EPUB criado: epubs/Devoradores de estrelas - Andy Weir.epub (13.5 MB)
-   Capítulos: 39/39 | CSS: 2 | Fontes: 8 | Imagens: 6
-
-🎉 Sucesso!
+1 ebook(s):
+[1] Devoradores de estrelas (ID: 1001903, 14 dias restantes)
+Auto-selecionado: Devoradores de estrelas
+Devoradores de estrelas - Andy Weir
+Capítulos: 39 | Recursos: 17
+epubs/Devoradores de estrelas - Andy Weir.epub (13.5 MB)
+Capítulos: 39/39 | CSS: 2 | Fontes: 8 | Imagens: 6
 ```
 
-## 🛠️ Solução de Problemas
+## Solução de Problemas
 
-| Erro             | Solução                                                     |
-| ---------------- | ----------------------------------------------------------- |
-| 401 Unauthorized | Token expirado. Gere um novo no navegador e limpe o cache.  |
-| Timeout          | Rede lenta (timeout padrão de 10min). Verifique a conexão.  |
-| SSL Error        | Necessário para ALB interno AWS. Comportamento normal.      |
-| EPUB vazio       | Verifique se o livro está ativamente alugado na plataforma. |
+| Erro              | Solução                                                                       |
+| ----------------- | ----------------------------------------------------------------------------- |
+| token expired     | Delete `~/.mec_livros_token` e cole um token novo obtido no DevTools.         |
+| no active rentals | Confirme que há empréstimos ativos em meclivros.mec.gov.br antes de executar. |
+| Timeout           | Timeout padrão de 10min. Verifique a conexão.                                 |
+| SSL Error         | Comportamento esperado — o ALB interno da AWS usa certificado próprio.        |
+| EPUB vazio        | O livro pode não estar ativamente alugado ou usar formato incompatível.       |
 
 ## Arquitetura e Recursos Modernos
 

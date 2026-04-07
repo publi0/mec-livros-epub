@@ -3,6 +3,7 @@ package main
 import (
 	"cmp"
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -20,22 +21,14 @@ import (
 const operationTimeout = 10 * time.Minute
 
 func main() {
-	magenta := color.New(color.FgMagenta, color.Bold).SprintFunc()
 	cyan := color.New(color.FgCyan).SprintFunc()
-	green := color.New(color.FgGreen).SprintFunc()
-	yellow := color.New(color.FgYellow).SprintFunc()
 	red := color.New(color.FgRed).SprintFunc()
-
-	fmt.Println(magenta("============================================"))
-	fmt.Println(magenta("MEC LIVROS - EBOOK DOWNLOADER"))
-	fmt.Println(magenta("============================================"))
-	fmt.Println()
 
 	ctx, cancel := context.WithTimeout(context.Background(), operationTimeout)
 	defer cancel()
 
 	if err := os.MkdirAll("epubs", 0755); err != nil {
-		fmt.Printf("%s\n", red("Erro ao criar pasta epubs"))
+		fmt.Fprintln(os.Stderr, red("error: cannot create epubs/ — check write permissions"))
 		os.Exit(1)
 	}
 
@@ -43,21 +36,15 @@ func main() {
 	jwtToken := cacheManager.Get()
 	usedCache := jwtToken != ""
 
-	if usedCache {
-		fmt.Println(yellow("Token em cache encontrado"))
-		fmt.Printf("Token: %s...\n\n", jwtToken[:min(30, len(jwtToken))])
-		fmt.Println(green("Usando token do cache\n"))
-	}
-
 	if jwtToken == "" {
-		fmt.Println(cyan("Informe o JWT Token:"))
-		fmt.Println("(No navegador: DevTools > Application > Local Storage)")
-		fmt.Print("Token: ")
+		fmt.Println("JWT token:")
+		fmt.Println("(DevTools > Application > Local Storage > token)")
+		fmt.Print("> ")
 		fmt.Scanln(&jwtToken)
 		jwtToken = strings.TrimSpace(jwtToken)
 
 		if jwtToken == "" {
-			fmt.Println(red("\nToken obrigatório"))
+			fmt.Fprintln(os.Stderr, "error: token is required")
 			os.Exit(1)
 		}
 		fmt.Println()
@@ -66,12 +53,20 @@ func main() {
 	client := downloader.NewClient(jwtToken, "")
 
 	rentals, err := client.FetchRentals(ctx)
-	if err != nil || len(rentals) == 0 {
-		fmt.Printf("%s\n", red("\nNenhum ebook encontrado ou token inválido"))
+	if err != nil {
+		if errors.Is(err, downloader.ErrUnauthorized) {
+			fmt.Fprintln(os.Stderr, red("error: token expired — get a new one from DevTools > Application > Local Storage, then: rm ~/.mec_livros_token"))
+		} else {
+			fmt.Fprintf(os.Stderr, red("error: %v\n"), err)
+		}
+		os.Exit(1)
+	}
+	if len(rentals) == 0 {
+		fmt.Fprintln(os.Stderr, "no active rentals — check meclivros.mec.gov.br for active loans")
 		os.Exit(1)
 	}
 
-	fmt.Printf("\n%sEncontrados %d ebook(s):%s\n\n", green(""), len(rentals), "")
+	fmt.Printf("%d ebook(s):\n", len(rentals))
 	for i, r := range rentals {
 		fmt.Printf("[%d] %s (ID: %d, %d dias restantes)\n",
 			i+1, cyan(r.BookTitle), r.BookID, r.DaysRemaining)
@@ -81,9 +76,9 @@ func main() {
 	switch len(rentals) {
 	case 1:
 		selected = rentals[0]
-		fmt.Printf("\n%sAuto-selecionado: %s%s\n", green(""), selected.BookTitle, "")
+		fmt.Printf("Auto-selecionado: %s\n", selected.BookTitle)
 	default:
-		fmt.Printf("\nSelecione [1-%d]: ", len(rentals))
+		fmt.Printf("Selecione [1-%d]: ", len(rentals))
 		var choice int
 		fmt.Scanln(&choice)
 		if choice < 1 || choice > len(rentals) {
@@ -105,32 +100,27 @@ func main() {
 		outputName = safeTitle
 	}
 
-	fmt.Printf("\n%sSaída: %s.epub%s\n", cyan(""), outputName, "")
-	fmt.Printf("%sIniciando download...%s\n\n", green(""), "")
-
 	client = downloader.NewClient(jwtToken, bookID)
 
 	manifest, webpubBaseURL, err := client.FetchManifest(ctx, bookID)
 	if err != nil {
-		fmt.Printf("%s\n", red("Erro ao buscar manifesto"))
+		fmt.Fprintf(os.Stderr, red("error: could not fetch manifest: %v\n"), err)
 		os.Exit(1)
 	}
 
-	fmt.Printf("%s%s - %s%s\n", cyan(""),
-		manifest.Manifest.Metadata.Title,
-		manifest.Manifest.Metadata.Author, "")
-	fmt.Printf("Capítulos: %d | Recursos: %d\n\n",
+	fmt.Printf("%s - %s\n", cyan(manifest.Manifest.Metadata.Title), manifest.Manifest.Metadata.Author)
+	fmt.Printf("Capítulos: %d | Recursos: %d\n",
 		len(manifest.Manifest.ReadingOrder),
 		len(manifest.Manifest.Resources))
 
 	stats, chapters, cssFiles, fontFiles, imageFiles, err := client.DownloadAll(ctx, manifest, webpubBaseURL)
 	if err != nil {
-		fmt.Printf("%s\n", red("Erro no download"))
+		fmt.Fprintf(os.Stderr, red("error: download failed: %v\n"), err)
 		os.Exit(1)
 	}
 
 	if stats.ChaptersSuccess == 0 {
-		fmt.Println(red("Nenhum capítulo baixado"))
+		fmt.Fprintln(os.Stderr, red("error: no chapters downloaded — book may be DRM-protected"))
 		os.Exit(1)
 	}
 
@@ -138,15 +128,14 @@ func main() {
 	builder := epub.NewBuilder(epubsPath)
 	epubPath, err := builder.Build(manifest, chapters, cssFiles, fontFiles, imageFiles)
 	if err != nil {
-		fmt.Printf("%s\n", red("Erro ao criar EPUB"))
+		fmt.Fprintf(os.Stderr, red("error: could not build EPUB: %v\n"), err)
 		os.Exit(1)
 	}
 
 	info, _ := os.Stat(epubPath)
 	sizeMB := float64(info.Size()) / 1024 / 1024
 
-	fmt.Printf("\n%sEPUB criado: %s (%.1f MB)%s\n",
-		green(""), epubPath, sizeMB, "")
+	fmt.Printf("%s (%.1f MB)\n", epubPath, sizeMB)
 	fmt.Printf("Capítulos: %d/%d | CSS: %d | Fontes: %d | Imagens: %d\n",
 		stats.ChaptersSuccess,
 		len(manifest.Manifest.ReadingOrder),
@@ -156,11 +145,9 @@ func main() {
 
 	if !usedCache {
 		if err := cacheManager.Save(jwtToken); err != nil {
-			fmt.Printf("Erro ao salvar cache: %v\n", err)
+			fmt.Fprintf(os.Stderr, "error: could not save token cache: %v\n", err)
 		}
 	}
-
-	fmt.Printf("\n%sSucesso!%s\n", magenta(""), "")
 }
 
 func sanitizeFilename(s string) string {
@@ -192,11 +179,4 @@ func sanitizeFilename(s string) string {
 		return "livro"
 	}
 	return result
-}
-
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
 }

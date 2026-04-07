@@ -18,6 +18,9 @@ import (
 	"github.com/publio/mectlivros/pkg/models"
 )
 
+// ErrUnauthorized is returned when the API responds with HTTP 401.
+var ErrUnauthorized = errors.New("unauthorized: token is invalid or expired")
+
 const (
 	baseURL    = "https://meclivros.mec.gov.br"
 	maxWorkers = 8
@@ -101,17 +104,21 @@ func (c *HTTPClient) DoRequest(ctx context.Context, url string, headers map[stri
 func (c *HTTPClient) FetchRentals(ctx context.Context) ([]models.Rental, error) {
 	url := baseURL + "/api/backend/rentals?page=1&limit=50&status=active"
 
-	_, body, err := c.DoRequest(ctx, url, nil)
+	resp, body, err := c.DoRequest(ctx, url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("fetch rentals: %w", err)
 	}
 
-	var resp models.RentalsResponse
-	if err := json.Unmarshal(body, &resp); err != nil {
+	if resp.StatusCode == 401 {
+		return nil, ErrUnauthorized
+	}
+
+	var apiResp models.RentalsResponse
+	if err := json.Unmarshal(body, &apiResp); err != nil {
 		return nil, fmt.Errorf("unmarshal rentals: %w", err)
 	}
 
-	return resp.Rentals, nil
+	return apiResp.Rentals, nil
 }
 
 // FetchManifest retrieves the book manifest and extracts webpub URL
